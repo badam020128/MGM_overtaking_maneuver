@@ -1,0 +1,11 @@
+# VS Code cache
+.vscode/
+
+# ROS 2 build and log folders
+build/
+install/
+log/
+
+# Python cache
+__pycache__/
+*.pyc
