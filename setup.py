@@ -39,9 +39,11 @@ setup(
             'pytest',
         ],
     },
+    
     entry_points={
         'console_scripts': [
             'simple_move = overtaking_maneuver.simple_move:main',
+            'lidar_processor = overtaking_maneuver.lidar_processor:main',
         ],
     },
 )

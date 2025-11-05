@@ -46,14 +46,13 @@
     </group>
 
     <!-- Node -->
-    <node pkg="gyak9" exec="test_scan" name="scan_tf" output="screen">
-        <param name="use_sim_time"  value="true"/>
-        <param name="map_frame"     value ="map"/>
-    </node>
-
     <node pkg="overtaking_maneuver" exec="simple_move" name="simple_move" output="screen">
         <param name="use_sim_time" value="true"/>
     </node>
+     <node pkg="overtaking_maneuver" exec="lidar_processor" name="lidar_processor" output="screen">
+        <param name="use_sim_time" value="true"/>
+    </node>
+
 
     <!-- RVIZ -->
     <node pkg="rviz2" exec="rviz2" name="rviz2" args="-d $(find-pkg-share overtaking_maneuver)/rviz/gyak9.rviz"/>
