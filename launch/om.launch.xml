@@ -52,6 +52,16 @@
      <node pkg="overtaking_maneuver" exec="lidar_processor" name="lidar_processor" output="screen">
         <param name="use_sim_time" value="true"/>
     </node>
+    <node pkg="overtaking_maneuver" exec="dynamic_planner" name="dynamic_planner" output="screen">
+        <param name="use_sim_time" value="true"/>
+
+        <param name="home_lane_y" value="-1.75"/>
+        <param name="oncoming_lane_y" value="1.75"/>
+        <param name="trigger_distance" value="6.0"/> 
+        <param name="p2_lookahead_x" value="10.0"/> 
+        <param name="p3_lookahead_x" value="10.0"/> 
+        <param name="overtake_speed_boost" value="0.5"/>
+    </node>
 
 
     <!-- RVIZ -->
