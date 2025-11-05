@@ -6,16 +6,25 @@ class simple_move(Node):
     def __init__(self):
         super().__init__('robot_controller')
         
+        # --- VÁLTOZTATÁS KEZDETE ---
+
         # Paraméterek: alapértelmezett sebességek robot1 és robot2 számára
-        # robot2_speed alapértelmezésben nagyobb, így a hátul jövő robot gyorsabb lesz
-        # Make robot1 the faster one by default
+        # Lineáris (előre) és anguláris (fordulás) sebességek
         self.declare_parameter('robot1_speed', 0.4)
         self.declare_parameter('robot2_speed', 0.2)
+        # Új paraméterek a kanyarodáshoz (rad/s), alapértelmezetten 0.0 (nem kanyarodik)
+        self.declare_parameter('robot1_angular_speed', 0.0) 
+        self.declare_parameter('robot2_angular_speed', 0.0)
         self.declare_parameter('hz', 10.0)
 
+        # Paraméterek beolvasása
         self.robot1_speed = float(self.get_parameter('robot1_speed').value)
         self.robot2_speed = float(self.get_parameter('robot2_speed').value)
+        self.robot1_angular_speed = float(self.get_parameter('robot1_angular_speed').value)
+        self.robot2_angular_speed = float(self.get_parameter('robot2_angular_speed').value)
         hz = float(self.get_parameter('hz').value)
+        
+        # --- VÁLTOZTATÁS VÉGE ---
 
         # Publisher-ek létrehozása mindkét robot cmd_vel topic-jához
         self.publisher_robot1 = self.create_publisher(Twist, '/robot1/cmd_vel', 10)
@@ -24,25 +33,37 @@ class simple_move(Node):
         # Időzítő létrehozása a megadott frekvenciával
         period = 1.0 / hz if hz > 0 else 0.1
         self.timer = self.create_timer(period, self.timer_callback)
-        self.get_logger().info(f'Robot Controller elindult: robot1_speed={self.robot1_speed}, robot2_speed={self.robot2_speed}, hz={hz}')
+        
+        # Frissített log üzenet, hogy az új paramétereket is mutassa
+        self.get_logger().info(
+            f'Robot Controller elindult: \n'
+            f'Robot1: linear={self.robot1_speed} m/s, angular={self.robot1_angular_speed} rad/s\n'
+            f'Robot2: linear={self.robot2_speed} m/s, angular={self.robot2_angular_speed} rad/s\n'
+            f'Frekvencia: {hz} Hz'
+        )
 
     def timer_callback(self):
-        # Előre mozgást definiáló Twist üzenetek külön a két robothoz
+        # Előre mozgást ÉS kanyarodást definiáló Twist üzenetek
+        
+        # --- VÁLTOZTATÁS KEZDETE ---
+        
         msg1 = Twist()
-        msg1.linear.x = self.robot1_speed  # robot1 sebessége (m/s)
+        msg1.linear.x = self.robot1_speed  # robot1 lineáris sebessége (m/s)
         msg1.linear.y = 0.0
         msg1.linear.z = 0.0
         msg1.angular.x = 0.0
         msg1.angular.y = 0.0
-        msg1.angular.z = 0.0
+        msg1.angular.z = self.robot1_angular_speed # robot1 szögsebessége (rad/s)
 
         msg2 = Twist()
-        msg2.linear.x = self.robot2_speed  # robot2 (hátul jövő) sebessége (m/s)
+        msg2.linear.x = self.robot2_speed  # robot2 lineáris sebessége (m/s)
         msg2.linear.y = 0.0
         msg2.linear.z = 0.0
         msg2.angular.x = 0.0
         msg2.angular.y = 0.0
-        msg2.angular.z = 0.0
+        msg2.angular.z = self.robot2_angular_speed # robot2 szögsebessége (rad/s)
+        
+        # --- VÁLTOZTATÁS VÉGE ---
 
         # Parancs publikálása mindkét robotnak
         self.publisher_robot1.publish(msg1)
