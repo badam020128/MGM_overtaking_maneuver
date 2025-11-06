@@ -9,41 +9,23 @@
     </include>
 
     <!-- Multi robot -->
-    <!-- Robot 1 -->
-    <group>
-      <include file="$(find-pkg-share turtlebot3_gazebo)/launch/robot_state_publisher.launch.py">
+  <!-- Multi robot -->
+    <include file="$(find-pkg-share gyak9)/launch/ns_robot.launch.py">
         <arg name="namespace" value="robot1"/>
-      </include>
-      
-      <include file="$(find-pkg-share turtlebot3_gazebo)/launch/multi_spawn_turtlebot3.launch.py">
         <arg name="x_pose" value="-2.0"/>
         <arg name="y_pose" value="-1.75"/>
-        <arg name="robot_name" value="robot1"/>
-        <arg name="namespace" value="robot1"/>
-        <arg name="sdf_path" value="$(find-pkg-share turtlebot3_gazebo)/models/turtlebot3_burger/model.sdf"/>
-      </include>
+    </include>
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="map_to_robot1_odom" output="screen"
+        args="0.0 0.0 0.0 0.0 0.0 0.0 map robot1/odom"/>
 
-      <node pkg="tf2_ros" exec="static_transform_publisher" name="map_to_robot1_odom" output="screen"
-          args="0.0 0.0 0.0 0.0 0.0 0.0 map robot1/odom"/>
-    </group>
-
-    <!-- Robot 2 -->
-    <group>
-      <include file="$(find-pkg-share turtlebot3_gazebo)/launch/robot_state_publisher.launch.py">
+    <include file="$(find-pkg-share gyak9)/launch/ns_robot.launch.py">
         <arg name="namespace" value="robot2"/>
-      </include>
-      
-      <include file="$(find-pkg-share turtlebot3_gazebo)/launch/multi_spawn_turtlebot3.launch.py">
         <arg name="x_pose" value="2.0"/>
         <arg name="y_pose" value="-1.75"/>
-        <arg name="robot_name" value="robot2"/>
-        <arg name="namespace" value="robot2"/>
-        <arg name="sdf_path" value="$(find-pkg-share turtlebot3_gazebo)/models/turtlebot3_burger/model.sdf"/>
-      </include>
+    </include>
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="map_to_robot2_odom" output="screen"
+        args="0.0 0.0 0.0 0.0 0.0 0.0 map robot2/odom"/>
 
-      <node pkg="tf2_ros" exec="static_transform_publisher" name="map_to_robot2_odom" output="screen"
-          args="0.0 0.0 0.0 0.0 0.0 0.0 map robot2/odom"/>
-    </group>
 
     <!-- Node -->
     <node pkg="overtaking_maneuver" exec="simple_move" name="simple_move" output="screen">
