@@ -36,9 +36,9 @@
     </node>
 
     <!-- Stanley controller node -->
-    <!--<node pkg="overtaking_maneuver" exec="stanley_controller" name="stanley_controller" output="screen">
+    <node pkg="overtaking_maneuver" exec="stanley_controller" name="stanley_controller" output="screen">
         <param name="use_sim_time" value="true"/>
-    </node>-->
+    </node>
 
     <node pkg="overtaking_maneuver" exec="dynamic_planner" name="dynamic_planner" output="screen">
         <param name="use_sim_time" value="true"/>
