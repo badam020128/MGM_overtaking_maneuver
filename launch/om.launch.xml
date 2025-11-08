@@ -12,7 +12,7 @@
   <!-- Multi robot -->
     <include file="$(find-pkg-share gyak9)/launch/ns_robot.launch.py">
         <arg name="namespace" value="robot1"/>
-        <arg name="x_pose" value="-2.0"/>
+        <arg name="x_pose" value="-3.5"/>
         <arg name="y_pose" value="-1.75"/>
     </include>
     <node pkg="tf2_ros" exec="static_transform_publisher" name="map_to_robot1_odom" output="screen"
@@ -20,7 +20,7 @@
 
     <include file="$(find-pkg-share gyak9)/launch/ns_robot.launch.py">
         <arg name="namespace" value="robot2"/>
-        <arg name="x_pose" value="2.0"/>
+        <arg name="x_pose" value="3.5"/>
         <arg name="y_pose" value="-1.75"/>
     </include>
     <node pkg="tf2_ros" exec="static_transform_publisher" name="map_to_robot2_odom" output="screen"
