@@ -115,7 +115,7 @@ class DynamicTrajectoryPlannerNode(Node):
         self.declare_parameter('oncoming_lane_y', 1.75)
         
         # Milyen közel engedjük, mielőtt előzünk (P1 trigger)
-        self.declare_parameter('trigger_distance', 5.0) 
+        self.declare_parameter('trigger_distance', 4.0) 
         
         # Milyen messze P2 "mellette" legyen P1-hez képest (X-ben)
         self.declare_parameter('p2_lookahead_x', 8.0) 
@@ -125,6 +125,10 @@ class DynamicTrajectoryPlannerNode(Node):
         
         # Mennyivel menjünk gyorsabban előzés közben
         self.declare_parameter('overtake_speed_boost', 0.4) # m/s
+        
+        # Biztonsági távolság robot2 előtt, mielőtt visszatérünk
+        self.declare_parameter('merge_safety_distance', 2.0)  # meters
+
 
         # Állapotgép
         self.state = 'FOLLOWING'
@@ -250,12 +254,21 @@ class DynamicTrajectoryPlannerNode(Node):
         if self.goal_P2 is None: return
         
         pos1 = self.odom_robot1.pose.pose.position
+        pos2 = self.odom_robot2.pose.pose.position
         
         # Euklideszi távolság a P2 célponthoz
         dist_to_P2 = math.sqrt((pos1.x - self.goal_P2[0])**2 + (pos1.y - self.goal_P2[1])**2)
         
-        if dist_to_P2 < 1.0: # 1.0 méteres tolerancia
-            self.get_logger().info("P2 (mellette) elérve.")
+        # Távolság ellenőrzése robot2-től (X irányban mennyivel vagyunk előtte)
+        safety_distance = self.get_parameter('merge_safety_distance').value
+        distance_ahead = pos1.x - pos2.x
+        
+        # Ha elértük P2-t és megvan a biztonsági távolság
+        if distance_ahead > safety_distance:
+            self.get_logger().info(f"P2 elérve és biztonságos távolság ({distance_ahead:.1f}m) > {safety_distance}m")
+            
+            self.get_logger().info("Elkezdjük a visszatérést.")
+            
             self.get_logger().info("2. LÉPÉS: Pálya tervezése P3-ba (előtte).")
             self.goal_P2 = None # Töröljük a célt
             self.state = 'PLANNING_MERGE'
