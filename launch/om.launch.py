@@ -32,7 +32,6 @@ from launch.actions import OpaqueFunction
 
 
 def spawn_robot_cmd(context, *args, **kwargs):
-    # args (optional): namespace, x_pose, y_pose
     TURTLEBOT3_MODEL = os.environ['TURTLEBOT3_MODEL']
 
     model_folder = 'turtlebot3_' + TURTLEBOT3_MODEL
@@ -51,20 +50,10 @@ def spawn_robot_cmd(context, *args, **kwargs):
     launch_file_dir = os.path.join(get_package_share_directory('turtlebot3_gazebo'), 'launch')
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
-    # read args if provided (OpaqueFunction passes them through)
-    if len(args) >= 3:
-        namespace_arg = args[0]
-        ns_name = namespace_arg
-        x_pose = LaunchConfiguration('x_pose', default=str(args[1]))
-        y_pose = LaunchConfiguration('y_pose', default=str(args[2]))
-    else:
-        namespace = LaunchConfiguration('namespace', default='test')
-        ns_name = namespace.perform(context)
-        x_pose = LaunchConfiguration('x_pose', default='0.0')
-        y_pose = LaunchConfiguration('y_pose', default='0.0')
-
-    # ensure we have a LaunchConfiguration object for namespace (used by other launch actions)
-    namespace_sub = LaunchConfiguration('namespace', default=str(ns_name))
+    namespace = LaunchConfiguration('namespace', default='test')
+    ns_name = namespace.perform(context)
+    x_pose = LaunchConfiguration('x_pose', default='0.0')
+    y_pose = LaunchConfiguration('y_pose', default='0.0')
 
     robot_state_publisher_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -72,7 +61,7 @@ def spawn_robot_cmd(context, *args, **kwargs):
         ),
         launch_arguments={
             'use_sim_time': use_sim_time,
-            'frame_prefix': namespace_sub}.items()
+            'frame_prefix': namespace}.items()
     )
 
     tree = ET.parse(urdf_path)
@@ -109,38 +98,14 @@ def spawn_robot_cmd(context, *args, **kwargs):
             )
         ),
 
-    GroupAction([PushRosNamespace(namespace_sub),
-                    robot_state_publisher_cmd,
+        GroupAction([PushRosNamespace(namespace),
+                                    robot_state_publisher_cmd,
                                     spawn_turtlebot_cmd])
 
     ]
         
 def generate_launch_description():
     ld = LaunchDescription()
-
-    # Start Gazebo (gzserver with custom world, and gzclient)
-    pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
-    pkg_this = get_package_share_directory('overtaking_maneuver')
-    world = os.path.join(pkg_this, 'world', 'road.world')
-
-    gzserver_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_gazebo_ros, 'launch', 'gzserver.launch.py')
-        ),
-        launch_arguments={'world': world}.items()
-    )
-
-    gzclient_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
-        )
-    )
-
-    ld.add_action(gzserver_cmd)
-    ld.add_action(gzclient_cmd)
-
-    # Spawn two robots (namespaces and positions copied from the XML launch)
-    ld.add_action(OpaqueFunction(function=spawn_robot_cmd, args=('robot1', -2.0, -1.75)))
-    ld.add_action(OpaqueFunction(function=spawn_robot_cmd, args=('robot2', 2.0, -1.75)))
+    ld.add_action(OpaqueFunction(function = spawn_robot_cmd))
 
     return ld
