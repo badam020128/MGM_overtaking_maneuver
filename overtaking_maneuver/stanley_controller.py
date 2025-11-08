@@ -10,10 +10,10 @@ class StanleyControllerNode(Node):
     def __init__(self):
         super().__init__('stanley_controller')
         # params
-        self.declare_parameter('k', 1.0)              # gain for crosstrack term
-        self.declare_parameter('k_soft', 1.0)         # softening term for low speeds
+        self.declare_parameter('k', 1.5)              # gain for crosstrack term
+        self.declare_parameter('k_soft', 0.9)         # softening term for low speeds
         self.declare_parameter('max_angular', 1.5)    # rad/s limit
-        self.declare_parameter('target_speed', 0.8)   # desired forward speed (m/s)
+        self.declare_parameter('target_speed', 0.4)   # desired forward speed (m/s)
         self.declare_parameter('cmd_topic', '/robot1/cmd_vel')
         self.declare_parameter('path_topic', '/robot1/planned_path')
         self.declare_parameter('odom_topic', '/robot1/odom')
