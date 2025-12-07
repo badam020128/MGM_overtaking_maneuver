@@ -129,6 +129,8 @@ class DynamicTrajectoryPlannerNode(Node):
         # Biztonsági távolság robot2 előtt, mielőtt visszatérünk
         self.declare_parameter('merge_safety_distance', 2.0)  # meters
 
+        self.declare_parameter('abort_min_distance', 0.2)  # meters
+
 
         # Állapotgép
         self.state = 'FOLLOWING'
@@ -188,6 +190,10 @@ class DynamicTrajectoryPlannerNode(Node):
 
         elif self.state == 'MERGING_BACK':
             self.check_if_P3_reached()
+
+        elif self.state == 'ABORTING':
+            # Abort pályán vagyunk, várjuk, hogy elérjük a biztonságos pontot
+            self.check_if_abort_finished()
 
     # --- ÁLLAPOTVÁLTÓ FÜGGVÉNYEK ---
 
@@ -374,6 +380,73 @@ class DynamicTrajectoryPlannerNode(Node):
         q = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
         euler = tf_transformations.euler_from_quaternion(q)
         return euler[2] # yaw
+
+    def check_abort_condition(self):
+        
+        abort_dist = self.get_parameter('abort_min_distance').value
+
+        pos1 = self.odom_robot1.pose.pose.position
+        pos2 = self.odom_robot2.pose.pose.position
+
+        dx = pos2.x - pos1.x  # >0: robot2 előttünk van
+
+        # Ha robot2 még előttünk van, de már túl közel (0 < dx < abort_dist) -> ABORT
+        if 0.0 < dx < abort_dist:
+            self.get_logger().warn(
+                f"*** ABORT ELŐZÉS *** Túl közel kerültünk az előttünk haladóhoz: dx={dx:.2f} m < {abort_dist:.2f} m"
+            )
+            self.plan_abort()
+            self.state = 'ABORTING'
+            return True
+
+        return False
+    
+    def plan_abort(self):
+        
+        (sx, sy, syaw, sv, sa) = self.get_current_state(self.odom_robot1)
+
+        pos2 = self.odom_robot2.pose.pose.position
+        vel2 = self.odom_robot2.twist.twist.linear.x
+
+        home_y = self.get_parameter('home_lane_y').value
+
+        # Legyen a cél X kicsit MÖGÖTTÜNK, hogy ne akarjunk robot2 mellé/mögé "ráfékezni"
+        gx = sx - 1.0  # 1 m-rel hátrébb a mostani X-hez képest
+        gy = home_y
+
+        gyaw = 0.0
+
+        # Menjünk lassabban, mint robot2 (ha negatívra menne, akkor 0)
+        gv = max(vel2 - 0.3, 0.0)
+        ga = 0.0
+
+        self.goal_abort = (gx, gy)
+
+        self.get_logger().info(
+            f"Abort pálya tervezése: Start=({sx:.1f}, {sy:.1f}), "
+            f"Cél=({gx:.1f}, {gy:.1f}), CélSebesség={gv:.1f} m/s"
+        )
+
+        self.run_planner_and_publish(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga)
+
+    def check_if_abort_finished(self):
+        if self.goal_abort is None:
+            return
+
+        pos1 = self.odom_robot1.pose.pose.position
+        dist_to_abort = math.sqrt(
+            (pos1.x - self.goal_abort[0])**2 + (pos1.y - self.goal_abort[1])**2
+        )
+
+        if dist_to_abort < 1.0:  # 1 m-es tolerancia
+            self.get_logger().info(
+                "*** ABORT MANŐVER BEFEJEZVE, visszaállás FOLLOWING állapotba ***"
+            )
+            self.goal_abort = None
+            # Biztos, ami biztos: takarítsuk a korábbi P2/P3 célokat is
+            self.goal_P2 = None
+            self.goal_P3 = None
+            self.state = 'FOLLOWING'
 
 
 def main(args=None):
