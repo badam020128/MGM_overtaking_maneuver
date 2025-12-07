@@ -172,6 +172,10 @@ class DynamicTrajectoryPlannerNode(Node):
         if not all([self.odom_robot1, self.odom_robot2, self.scan_robot1]):
             self.get_logger().warn("Várakozás az odometria és LIDAR adatokra...", skip_first=True, throttle_duration_sec=5)
             return
+        
+        if self.check_abort_condition():
+            return
+
 
         # Állapotok kezelése
         if self.state == 'FOLLOWING':
@@ -384,9 +388,16 @@ class DynamicTrajectoryPlannerNode(Node):
     def check_abort_condition(self):
         
         abort_dist = self.get_parameter('abort_min_distance').value
+        home_y = self.get_parameter('home_lane_y').value
 
         pos1 = self.odom_robot1.pose.pose.position
         pos2 = self.odom_robot2.pose.pose.position
+
+
+        # Csak akkor legyen abort, ha MÉG a saját sávban vagy
+        if abs(pos1.y - home_y) > 0.5:
+            return False
+
 
         dx = pos2.x - pos1.x  # >0: robot2 előttünk van
 
